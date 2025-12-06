@@ -1,5 +1,3 @@
-'use client'
-
 import { useChatStore } from '@/store/chat.store'
 
 export default function CurrentChatTitle() {

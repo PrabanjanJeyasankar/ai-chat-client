@@ -1,5 +1,3 @@
-'use client'
-
 import { Markdown } from '@/components/ui/markdown'
 import { Message } from '@/components/ui/message'
 import { AlertTriangle, Check, Copy, X } from 'lucide-react'

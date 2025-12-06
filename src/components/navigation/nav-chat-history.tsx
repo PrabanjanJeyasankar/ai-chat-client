@@ -1,5 +1,3 @@
-'use client'
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,7 +84,10 @@ export function NavChatHistory() {
                 <SidebarMenuButton asChild>
                   <button
                     onClick={() => openChat(id)}
-                    className='flex items-center gap-2 w-full text-left'>
+                    onDoubleClick={() => {
+                      if (!renameId) startRename(id, chat.title)
+                    }}
+                    className='flex items-center gap-2 w-full text-left select-none'>
                     {renameId === id ? (
                       <Input
                         autoFocus
@@ -118,9 +119,11 @@ export function NavChatHistory() {
                       <Pencil className='mr-2 size-4 text-muted-foreground' />
                       Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setDeleteId(id)}>
+                    <DropdownMenuItem
+                      className='text-destructive'
+                      onClick={() => setDeleteId(id)}>
                       <Trash2 className='mr-2 size-4 text-destructive' />
-                      Del ete
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -23,6 +23,9 @@ export const apiEndpoints = {
     regenerate: (messageId: string) =>
       `${baseUrl}/message/${messageId}/regenerate`,
   },
+  search: {
+    search: `${baseUrl}/search`,
+  },
 } as const
 
 export type ApiEndpoints = typeof apiEndpoints

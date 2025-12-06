@@ -9,7 +9,7 @@ import axios from 'axios'
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: environment.apiBaseUrl,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },

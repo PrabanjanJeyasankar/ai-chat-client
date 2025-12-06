@@ -37,6 +37,8 @@ type ChatState = {
   createTempChat: () => string
   upgradeTempChat: (tempId: string, realId: string, title: string) => void
 
+  isChatLoading: boolean
+
   loadChatFromBackend: (chatId: string) => Promise<void>
   sendMessage: (chatId: string | null, content: string) => Promise<void>
   editMessage: (messageId: string, content: string) => Promise<void>
@@ -47,6 +49,7 @@ type ChatState = {
 export const useChatStore = create<ChatState>((set, get) => ({
   chats: storage.get<Record<string, LocalChat>>('chats') || {},
   currentChatId: null,
+  isChatLoading: false,
 
   history: [],
   hasHydrated: false,
@@ -66,6 +69,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       currentChatId: null,
       history: [],
       error: null,
+      isChatLoading: false,
       isAssistantTyping: false,
     })
   },
@@ -131,6 +135,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   async loadChatFromBackend(chatId) {
+    const existing = get().chats[chatId]
+    if (!existing || existing.messages.length === 0) {
+      set({ isChatLoading: true })
+    }
+
     try {
       const response = await messageService.getMessages(chatId)
 
@@ -146,26 +155,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
       storage.set('chats', chats)
       set({ chats })
     } catch (error) {
-      get().setError('Failed to load chat')
+      const err: any = error
 
-      // create inline assistant error message
-      const prev = get().chats
-      const chats = structuredClone(prev)
+      const backendError =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Unknown error occurred'
 
-      chats[chatId] = chats[chatId] || {
-        chatId,
-        messages: [],
-        isTemporary: false,
-      }
+      get().setError(backendError)
 
-      chats[chatId].messages.push({
+      const latest = get().chats
+      const updated = structuredClone(latest)
+
+      const updatedChat =
+        updated[chatId] ||
+        (updated[chatId] = {
+          chatId,
+          messages: [],
+          isTemporary: false,
+        })
+
+      updatedChat.messages.push({
         _id: `error-${Date.now()}`,
         chatId,
         userId: null,
         role: 'assistant',
         versions: [
           {
-            content: '⚠️ Failed to load messages.',
+            content: `⚠️ ${backendError}`,
             model: null,
             createdAt: new Date().toISOString(),
             isError: true,
@@ -176,7 +194,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         updatedAt: new Date().toISOString(),
       })
 
-      set({ chats })
+      storage.set('chats', updated)
+      set({ chats: updated })
+    } finally {
+      set({ isChatLoading: false })
     }
   },
 
@@ -245,6 +266,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       storage.set('chats', updated)
       set({ chats: updated })
     } catch (error) {
+      const err: any = error
+
+      const backendError =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Unknown error occurred'
+
       const latest = get().chats
       const updated = structuredClone(latest)
       const updatedChat = updated[localId]
@@ -256,7 +285,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: 'assistant',
         versions: [
           {
-            content: 'Assistant failed to respond.',
+            content: `${backendError}`,
             model: null,
             createdAt: new Date().toISOString(),
             isError: true,
@@ -317,7 +346,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ chats })
       }
 
-      // Update history immediately
       const history = get().history.map((c) =>
         c._id === chatId ? { ...c, title } : c
       )
@@ -341,7 +369,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         storage.set('chats', chats)
       }
 
-      // Update history immediately
       const history = get().history.filter((c) => c._id !== chatId)
       set({ history })
 
