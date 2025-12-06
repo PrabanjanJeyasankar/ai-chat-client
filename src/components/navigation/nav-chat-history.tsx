@@ -50,6 +50,16 @@ export function NavChatHistory() {
   const startRename = (id: string, title: string) => {
     setRenameId(id)
     setRenameValue(title || '')
+
+    setTimeout(() => {
+      const el = document.getElementById(
+        `rename-input-${id}`
+      ) as HTMLInputElement | null
+      if (el) {
+        el.focus()
+        el.select()
+      }
+    }, 0)
   }
 
   const submitRename = async () => {
@@ -69,7 +79,7 @@ export function NavChatHistory() {
     <SidebarGroup>
       <SidebarGroupLabel>Chat History</SidebarGroupLabel>
 
-      <SidebarGroupContent className='max-h-[60vh] overflow-y-auto '>
+      <SidebarGroupContent className='max-h-[80vh] overflow-y-auto '>
         <SidebarMenu>
           {history.map((chat, index) => {
             const id = chat._id
@@ -89,17 +99,19 @@ export function NavChatHistory() {
                     }}
                     className='flex items-center gap-2 w-full text-left select-none'>
                     {renameId === id ? (
-                      <Input
-                        autoFocus
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onBlur={submitRename}
-                        className='h-7 text-sm px-1'
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') submitRename()
-                          if (e.key === 'Escape') setRenameId(null)
-                        }}
-                      />
+                      <div className='rename-wrapper'>
+                        <Input
+                          id={`rename-input-${id}`}
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={submitRename}
+                          className='rename-input h-7 text-sm'
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') submitRename()
+                            if (e.key === 'Escape') setRenameId(null)
+                          }}
+                        />
+                      </div>
                     ) : (
                       <span className='truncate text-sm'>
                         {chat.title || 'Untitled'}
@@ -109,9 +121,11 @@ export function NavChatHistory() {
                 </SidebarMenuButton>
 
                 <DropdownMenu>
-                  <DropdownMenuTrigger className='absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 translate-x-1 group-hover/item:translate-x-0 transition-all duration-200 flex items-center justify-center p-1 rounded-md'>
-                    <MoreHorizontal className='size-4' />
-                  </DropdownMenuTrigger>
+                  {renameId !== id && (
+                    <DropdownMenuTrigger className='absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 translate-x-1 group-hover/item:translate-x-0 transition-all duration-200 flex items-center justify-center p-1 rounded-md'>
+                      <MoreHorizontal className='size-4' />
+                    </DropdownMenuTrigger>
+                  )}
 
                   <DropdownMenuContent side='right' align='start'>
                     <DropdownMenuItem

@@ -60,9 +60,13 @@ export function ChatMessage({
         ) : (
           <>
             <Message
-              className={`w-fit rounded-2xl p-4 ${
-                isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              }`}>
+              className={`w-fit p-4
+                ${
+                  isUser
+                    ? 'bg-primary text-primary-foreground rounded-2xl rounded-br-none'
+                    : 'bg-muted rounded-2xl rounded-bl-none'
+                }
+              `}>
               {isEditing ? (
                 <textarea
                   className='w-full text-sm p-2 rounded bg-white text-black min-w-[200px]'

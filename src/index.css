@@ -180,3 +180,23 @@
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(150, 150, 150, 0.6);
 }
+
+/* Remove border, padding, background, and ring ONLY for rename input */
+.rename-wrapper .rename-input {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove focus ring */
+.rename-wrapper .rename-input:focus,
+.rename-wrapper .rename-input:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-opacity: 0 !important;
+  --tw-ring-shadow: none !important;
+}

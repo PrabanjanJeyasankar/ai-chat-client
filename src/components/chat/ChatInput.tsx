@@ -71,11 +71,11 @@ export function ChatInput({
             onChange={(e) => handleChange(e.target.value)}
           />
 
-          <div className='text-xs text-muted-foreground text-right pr-1'>
-            {charCount}/{MAX_SINGLE_MESSAGE_CHARS}
-          </div>
+          <PromptInputActions className='flex items-center justify-between pt-2 w-full px-1'>
+            <div className='text-xs ml-2 text-muted-foreground'>
+              {charCount}/{MAX_SINGLE_MESSAGE_CHARS}
+            </div>
 
-          <PromptInputActions className='justify-end pt-2'>
             <PromptInputAction tooltip={isLoading ? 'Stop' : 'Send'}>
               <Button
                 type='button'

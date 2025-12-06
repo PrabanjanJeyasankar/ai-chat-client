@@ -18,12 +18,36 @@ export function NavChatActions({
   onNewChat,
   onOpenSearch,
 }: NavChatActionsProps) {
-  const [shortcutLabel, setShortcutLabel] = useState('')
+  const [keys, setKeys] = useState({
+    search: '',
+    newChat: '',
+  })
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().includes('MAC')
-    setShortcutLabel(isMac ? '⌘K' : 'Ctrl+K')
-  }, [])
+
+    setKeys({
+      search: isMac ? '⌘K' : 'Ctrl+K',
+      newChat: isMac ? '⇧⌘O' : 'Ctrl+Shift+O',
+    })
+
+    const handler = (e: KeyboardEvent) => {
+      const meta = isMac ? e.metaKey : e.ctrlKey
+
+      if (meta && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        onOpenSearch()
+      }
+
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'o') {
+        e.preventDefault()
+        onNewChat()
+      }
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onNewChat, onOpenSearch])
 
   return (
     <SidebarGroup>
@@ -34,9 +58,13 @@ export function NavChatActions({
           <SidebarMenuButton asChild>
             <button
               onClick={onNewChat}
-              className='w-full flex items-center gap-2'>
-              <SquarePen className='size-4' />
-              <span>New Chat</span>
+              className='w-full flex items-center justify-between gap-2'>
+              <div className='flex items-center gap-2'>
+                <SquarePen className='size-4' />
+                <span>New Chat</span>
+              </div>
+
+              <span className='text-xs opacity-60'>{keys.newChat}</span>
             </button>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -51,7 +79,7 @@ export function NavChatActions({
                 <span>Search</span>
               </div>
 
-              <span className='text-xs opacity-60'>{shortcutLabel}</span>
+              <span className='text-xs opacity-60'>{keys.search}</span>
             </button>
           </SidebarMenuButton>
         </SidebarMenuItem>
