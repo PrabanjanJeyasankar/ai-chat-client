@@ -18,6 +18,7 @@ export type AuthState = {
   setAuthToken: (token: string | null) => void
   setCurrentUser: (user: UserProfile | null) => void
   logoutUser: () => void
+  syncUser: () => Promise<void>
 }
 
 function getStoredToken(): string | null {
@@ -28,7 +29,7 @@ function getStoredToken(): string | null {
   }
 }
 
-export const authStore = create<AuthState>((set) => ({
+export const authStore = create<AuthState>((set, get) => ({
   authToken: getStoredToken(),
   currentUser: null,
   isAuthenticated: getStoredToken() !== null,
@@ -60,5 +61,20 @@ export const authStore = create<AuthState>((set) => ({
       currentUser: null,
       isAuthenticated: false,
     })
+  },
+
+  syncUser: async () => {
+    const token = getStoredToken()
+    if (!token) return
+
+    try {
+      const { authService } = await import('@/services/auth.service')
+      const response = await authService.getMe()
+      set({ currentUser: response.data.user })
+    } catch (error) {
+      console.error('Failed to sync user', error)
+      // If token is invalid, force logout
+      get().logoutUser()
+    }
   },
 }))

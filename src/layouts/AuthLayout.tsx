@@ -20,11 +20,11 @@ export function AuthLayout({
   return (
     <div
       className={cn(
-        'bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10',
+        'bg-background min-h-svh flex items-center justify-center p-6',
         className
       )}>
-      <div className='w-full max-w-sm'>
-        <div className='flex flex-col items-center gap-2 text-center mb-6'>
+      <div className='w-full max-w-sm flex flex-col'>
+        <div className='flex flex-col items-center text-center mb-6 gap-2'>
           <a href='#' className='flex flex-col items-center gap-2 font-medium'>
             <div className='flex size-8 items-center justify-center rounded-md'>
               <Logo />
@@ -33,11 +33,10 @@ export function AuthLayout({
           </a>
 
           <h1 className='text-xl font-bold'>{title}</h1>
-
           <div className='text-sm text-muted-foreground'>{description}</div>
         </div>
 
-        {children}
+        <div className='flex-1 overflow-visible'>{children}</div>
       </div>
     </div>
   )

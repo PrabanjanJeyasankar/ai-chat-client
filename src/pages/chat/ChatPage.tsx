@@ -1,5 +1,10 @@
-// src/pages/chat/Chat.tsx
+import { ChatWindow } from '@/components/chat/ChatWindow'
+import { ChatLayout } from '@/layouts/ChatLayout'
 
 export default function ChatPage() {
-  return <div>Chat</div>
+  return (
+    <ChatLayout>
+      <ChatWindow />
+    </ChatLayout>
+  )
 }
