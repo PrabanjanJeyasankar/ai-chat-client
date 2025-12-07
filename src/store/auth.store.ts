@@ -17,30 +17,16 @@ export type AuthState = {
 
   setAuthToken: (token: string | null) => void
   setCurrentUser: (user: UserProfile | null) => void
-  logoutUser: () => void
+  logoutUser: () => Promise<void>
   syncUser: () => Promise<void>
 }
 
-function getStoredToken(): string | null {
-  try {
-    return sessionStorage.getItem('authToken')
-  } catch {
-    return null
-  }
-}
-
 export const authStore = create<AuthState>((set, get) => ({
-  authToken: getStoredToken(),
+  authToken: null,
   currentUser: null,
-  isAuthenticated: getStoredToken() !== null,
+  isAuthenticated: false,
 
   setAuthToken: (token: string | null) => {
-    if (token) {
-      sessionStorage.setItem('authToken', token)
-    } else {
-      sessionStorage.removeItem('authToken')
-    }
-
     set({
       authToken: token,
       isAuthenticated: token !== null,
@@ -53,18 +39,23 @@ export const authStore = create<AuthState>((set, get) => ({
     })
   },
 
-  logoutUser: () => {
-    sessionStorage.removeItem('authToken')
-
-    set({
-      authToken: null,
-      currentUser: null,
-      isAuthenticated: false,
-    })
+  logoutUser: async () => {
+    try {
+      const { authService } = await import('@/services/auth.service')
+      await authService.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      set({
+        authToken: null,
+        currentUser: null,
+        isAuthenticated: false,
+      })
+    }
   },
 
   syncUser: async () => {
-    const token = getStoredToken()
+    const token = get().authToken
     if (!token) return
 
     try {
@@ -72,9 +63,7 @@ export const authStore = create<AuthState>((set, get) => ({
       const response = await authService.getMe()
       set({ currentUser: response.data.user })
     } catch (error) {
-      console.error('Failed to sync user', error)
-      // If token is invalid, force logout
-      get().logoutUser()
+      await get().logoutUser()
     }
   },
 }))

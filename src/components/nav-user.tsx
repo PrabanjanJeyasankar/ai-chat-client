@@ -31,6 +31,18 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const { theme, toggleTheme } = useThemeStore()
 
+  const handleLogout = async () => {
+    try {
+      await authStore.getState().logoutUser()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+
+    useChatStore.getState().clearAll()
+    localStorage.removeItem('chats')
+    window.location.href = '/login'
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -97,11 +109,9 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              onClick={() => {
-                authStore.getState().logoutUser()
-                useChatStore.getState().clearAll()
-                localStorage.removeItem('chats')
-                window.location.href = '/login'
+              onSelect={(event) => {
+                event.preventDefault()
+                handleLogout()
               }}>
               <LogOut />
               Log out

@@ -21,7 +21,7 @@ export type AuthSuccessResponse = {
       id: string
       email: string
     }
-    token: string
+    accessToken: string
   }
 }
 
@@ -58,8 +58,27 @@ async function getMe(): Promise<MeResponse> {
   return response.data
 }
 
+async function refreshToken(): Promise<AuthSuccessResponse> {
+  const response = await axiosInstance.post<AuthSuccessResponse>(
+    apiEndpoints.auth.refresh,
+    {},
+    { withCredentials: true }
+  )
+  return response.data
+}
+
+async function logout(): Promise<void> {
+  await axiosInstance.post(
+    apiEndpoints.auth.logout,
+    {},
+    { withCredentials: true }
+  )
+}
+
 export const authService = {
   signup,
   login,
   getMe,
+  refreshToken,
+  logout,
 }

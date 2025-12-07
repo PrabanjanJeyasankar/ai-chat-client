@@ -65,7 +65,7 @@ export default function SignupForm({
         name: nameValue,
       })
 
-      authStore.getState().setAuthToken(response.data.token)
+      authStore.getState().setAuthToken(response.data.accessToken)
       const profile = await authService.getMe()
       authStore.getState().setCurrentUser(profile.data.user)
 

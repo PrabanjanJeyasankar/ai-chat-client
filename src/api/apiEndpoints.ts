@@ -7,6 +7,8 @@ export const apiEndpoints = {
     signup: `${baseUrl}/auth/signup`,
     login: `${baseUrl}/auth/login`,
     me: `${baseUrl}/auth/me`,
+    refresh: `${baseUrl}/auth/refresh`,
+    logout: `${baseUrl}/auth/logout`,
   },
   chat: {
     create: `${baseUrl}/chat`,

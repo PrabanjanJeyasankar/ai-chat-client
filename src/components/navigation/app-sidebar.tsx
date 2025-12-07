@@ -27,7 +27,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const currentUser = authStore((s) => s.currentUser)
-  console.log(currentUser)
   const { loadAllChats, setCurrentChat, refreshWelcomeMessage } = useChatStore()
 
   useEffect(() => {
