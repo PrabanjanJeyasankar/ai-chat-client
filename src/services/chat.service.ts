@@ -10,6 +10,7 @@ export type ChatListItem = {
   lastMessageAt?: string
   createdAt?: string
   updatedAt?: string
+  mode?: 'default' | 'news'
 }
 
 export type ChatListResponse = {
@@ -19,7 +20,8 @@ export type ChatListResponse = {
 }
 
 export type CreateChatRequest = {
-  firstMessageContent: string
+  firstMessageContent?: string
+  mode?: 'default' | 'news'
 }
 
 export type CreateChatResponse = {
@@ -31,6 +33,7 @@ export type CreateChatResponse = {
     title: string
     messages: []
     createdAt: string
+    mode?: 'default' | 'news'
   }
 }
 

@@ -3,12 +3,12 @@ import { ChatMessage } from '@/components/chat/ChatMessage'
 import { Loader } from '@/components/ui/loader'
 import { Skeleton } from '@/components/ui/skeleton'
 import { WELCOME_MESSAGES } from '@/constants/chat.constants'
-import type { Message } from '@/services/message.service'
 import { useChatStore } from '@/store/chat.store'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDown } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { ShimmerLoaderText } from '../ShimmerTextLoader'
 
 export function ChatWindow() {
   const { chatId } = useParams<{ chatId?: string }>()
@@ -20,6 +20,7 @@ export function ChatWindow() {
     sendMessage,
     editMessage,
     isAssistantTyping,
+    assistantTypingMode,
     welcomeMessageTrigger,
     isChatLoading,
   } = useChatStore()
@@ -27,30 +28,30 @@ export function ChatWindow() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState<string>('')
   const [showScrollDown, setShowScrollDown] = useState(false)
-  const [welcomeMessage, setWelcomeMessage] = useState(WELCOME_MESSAGES[0])
   const [searchParams, setSearchParams] = useSearchParams()
+  const [newsLoaderIndex, setNewsLoaderIndex] = useState(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const welcomeMessage =
+    WELCOME_MESSAGES[welcomeMessageTrigger % WELCOME_MESSAGES.length]
+
   useEffect(() => {
-    if (!chatId) {
-      setCurrentChat(null)
-      setWelcomeMessage(
-        WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]
-      )
-      return
-    }
-
+    if (!chatId) return
     setCurrentChat(chatId)
+  }, [chatId, setCurrentChat])
 
+  useEffect(() => {
+    if (!chatId) return
     if (!chats[chatId]) {
       loadChatFromBackend(chatId).catch(() => {})
     }
-  }, [chatId, welcomeMessageTrigger])
+  }, [chatId, chats, loadChatFromBackend])
 
   useEffect(() => {
-    const handler = (event: any) => {
-      const messageId = event.detail.messageId
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<{ messageId: string }>
+      const messageId = customEvent.detail.messageId
       const element = document.getElementById(`msg-${messageId}`)
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -65,8 +66,33 @@ export function ChatWindow() {
   }, [])
 
   const chat = currentChatId ? chats[currentChatId] : null
-  const messages: Message[] = chat?.messages ?? []
+  const messages = useMemo(() => chat?.messages ?? [], [chat?.messages])
+
   const isNewChat = messages.length === 0
+  const isNewsActive = assistantTypingMode === 'news'
+
+  const newsPhrases = useMemo(
+    () => [
+      'Scanning the latest headlines...',
+      'Pulling fresh articles...',
+      'Ranking relevant sources...',
+      'Citing trusted outlets...',
+      'Cross-checking details...',
+      'Curating your brief...',
+    ],
+    []
+  )
+
+  useEffect(() => {
+    if (!isAssistantTyping || !isNewsActive) return
+
+    const id = setInterval(() => {
+      setNewsLoaderIndex((prev) => (prev + 1) % newsPhrases.length)
+    }, 1600)
+
+    return () => clearInterval(id)
+  }, [isAssistantTyping, isNewsActive, newsPhrases.length])
+
   useEffect(() => {
     const msgId = searchParams.get('msgId')
 
@@ -95,7 +121,7 @@ export function ChatWindow() {
         }, 1500)
       }
     }, 150)
-  }, [chatId, messages])
+  }, [chatId, messages, searchParams, setSearchParams])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -205,9 +231,13 @@ export function ChatWindow() {
                   <div id={`msg-${msg._id}`} key={msg._id}>
                     <ChatMessage
                       role={msg.role}
+                      mode={msg.mode ?? 'default'}
                       versions={msg.versions}
                       currentVersionIndex={msg.currentVersionIndex}
                       messageId={msg._id}
+                      sources={
+                        msg.role === 'assistant' ? msg.sources : undefined
+                      }
                       isEditing={editingMessageId === msg._id}
                       editingContent={editingContent}
                       onStartEdit={(id, content) => {
@@ -224,7 +254,22 @@ export function ChatWindow() {
                 {isAssistantTyping && (
                   <div className='flex w-full justify-start my-2'>
                     <div className='max-w-[75%] bg-muted rounded-2xl p-4'>
-                      <Loader variant='typing' size='md' />
+                      {isNewsActive ? (
+                        <AnimatePresence mode='wait'>
+                          <motion.div
+                            key={newsPhrases[newsLoaderIndex]}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -14 }}
+                            transition={{ duration: 0.35 }}>
+                            <ShimmerLoaderText
+                              text={newsPhrases[newsLoaderIndex]}
+                            />
+                          </motion.div>
+                        </AnimatePresence>
+                      ) : (
+                        <Loader variant='typing' size='md' />
+                      )}
                     </div>
                   </div>
                 )}
@@ -242,8 +287,8 @@ export function ChatWindow() {
               behavior: 'smooth',
             })
           }
-          className='absolute left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground p-3 shadow-lg z-30 bottom-40'>
-          <ArrowDown className='h-5 w-5' />
+          className='absolute left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground p-2 shadow-lg z-30 bottom-40'>
+          <ArrowDown className='h-4 w-4' />
         </button>
       )}
 

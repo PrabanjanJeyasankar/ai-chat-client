@@ -33,6 +33,8 @@ export const authStore = create<AuthState>((set) => ({
   },
 
   logoutUser: async (force = false) => {
+    console.log('[auth.store] Logout triggered, force:', force)
+
     if (!force) {
       try {
         const { authService } = await import('@/services/auth.service')

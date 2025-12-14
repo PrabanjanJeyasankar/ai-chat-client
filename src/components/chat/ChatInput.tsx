@@ -6,9 +6,11 @@ import {
   PromptInputTextarea,
 } from '@/components/ui/prompt-input'
 import { MAX_SINGLE_MESSAGE_CHARS } from '@/config/llmLmits'
+import { useChatStore } from '@/store/chat.store'
 import { ArrowUp, Square } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { NewsModeToggle } from '../NewsModeToggleButton'
 
 type ChatInputProps = {
   onSendMessage: (content: string) => void
@@ -25,6 +27,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false)
+  const { newsMode, setNewsMode } = useChatStore()
 
   const getCharCount = (text: string) => [...text].length
 
@@ -72,8 +75,20 @@ export function ChatInput({
           />
 
           <PromptInputActions className='flex items-center justify-between pt-2 w-full px-1'>
-            <div className='text-xs ml-2 text-muted-foreground'>
-              {charCount}/{MAX_SINGLE_MESSAGE_CHARS}
+            <div className='flex items-center gap-2'>
+              <NewsModeToggle
+                enabled={newsMode}
+                onToggle={() => {
+                  setNewsMode(!newsMode)
+                  toast.success(
+                    newsMode ? 'News mode disabled' : 'News mode enabled'
+                  )
+                }}
+              />
+
+              <div className='text-xs text-muted-foreground'>
+                {charCount}/{MAX_SINGLE_MESSAGE_CHARS}
+              </div>
             </div>
 
             <PromptInputAction tooltip={isLoading ? 'Stop' : 'Send'}>

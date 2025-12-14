@@ -1,5 +1,3 @@
-// chat.store.ts
-
 import { chatService, type ChatListItem } from '@/services/chat.service'
 import { messageService, type Message } from '@/services/message.service'
 import { storage } from '@/utils/storage'
@@ -10,11 +8,15 @@ export type LocalChat = {
   title?: string
   messages: Message[]
   isTemporary?: boolean
+  mode?: 'default' | 'news'
 }
 
 type ChatState = {
   chats: Record<string, LocalChat>
   currentChatId: string | null
+
+  newsMode: boolean
+  setNewsMode: (enabled: boolean) => void
 
   history: ChatListItem[]
   hasHydrated: boolean
@@ -25,6 +27,8 @@ type ChatState = {
 
   isAssistantTyping: boolean
   setAssistantTyping: (typing: boolean) => void
+  assistantTypingMode: 'default' | 'news' | null
+  setAssistantTypingMode: (mode: 'default' | 'news' | null) => void
 
   clearAll: () => void
 
@@ -51,8 +55,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
   currentChatId: null,
   isChatLoading: false,
 
+  // Persist the chat input's mode toggle across reloads.
+  // This is a UI preference (not per-chat), used when sending the next message.
+  newsMode: storage.get<boolean>('newsMode') ?? false,
+  setNewsMode(enabled) {
+    storage.set('newsMode', enabled)
+    set({ newsMode: enabled })
+  },
+
   history: [],
   hasHydrated: false,
+
+  assistantTypingMode: null,
+  setAssistantTypingMode(mode) {
+    set({ assistantTypingMode: mode })
+  },
 
   error: null,
   setError(msg) {
@@ -71,6 +88,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       error: null,
       isChatLoading: false,
       isAssistantTyping: false,
+      assistantTypingMode: null,
     })
   },
 
@@ -79,7 +97,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatService.getAllChats()
 
       set({ history: response.data, hasHydrated: true })
-    } catch (error) {}
+    } catch (error) {
+      console.error('[chat.store] loadAllChats ERROR →', error)
+    }
   },
 
   welcomeMessageTrigger: 0,
@@ -102,10 +122,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const prev = get().chats
     const chats = structuredClone(prev)
 
+    const mode = get().newsMode ? 'news' : 'default'
+
     chats[tempId] = {
       chatId: tempId,
       messages: [],
       isTemporary: true,
+      mode,
     }
 
     set({ chats, currentChatId: tempId })
@@ -124,6 +147,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       title,
       messages: temp.messages,
       isTemporary: false,
+      mode: temp.mode,
     }
 
     delete chats[tempId]
@@ -131,7 +155,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     storage.set('chats', chats)
     set({ chats, currentChatId: realId })
 
-    get().loadAllChats()
+    setTimeout(() => {
+      get().loadAllChats()
+    }, 100)
   },
 
   async loadChatFromBackend(chatId) {
@@ -146,15 +172,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const prev = get().chats
       const chats = structuredClone(prev)
 
+      const existingChat = chats[chatId]
       chats[chatId] = {
         chatId,
         messages: response.data.messages,
         isTemporary: false,
+        mode:
+          existingChat?.mode ||
+          response.data.messages[response.data.messages.length - 1]?.mode ||
+          'default',
       }
 
       storage.set('chats', chats)
       set({ chats })
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const err: any = error
 
       const backendError =
@@ -181,6 +213,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         chatId,
         userId: null,
         role: 'assistant',
+        mode: updatedChat.mode || 'default',
         versions: [
           {
             content: `⚠️ ${backendError}`,
@@ -208,6 +241,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       localId = get().createTempChat()
     }
 
+    const requestedMode = get().newsMode ? 'news' : 'default'
+
     const prev = get().chats
     const chats = structuredClone(prev)
     const chat = chats[localId]
@@ -219,6 +254,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       chatId: localId,
       userId: null,
       role: 'user',
+      mode: requestedMode,
       versions: [
         {
           content,
@@ -233,23 +269,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set({ chats })
     get().setAssistantTyping(true)
+    get().setAssistantTypingMode(requestedMode)
 
     try {
       let response
 
       try {
         if (chat.isTemporary) {
-          response = await messageService.createMessage({ content })
+          response = await messageService.createMessage({
+            content,
+            mode: requestedMode,
+          })
 
           const realId = response.data.chatId || localId
           const title = response.data.title || 'New Chat'
 
           get().upgradeTempChat(localId, realId, title)
           localId = realId
+
+          // Set chat mode
+          const latest = get().chats
+          const updated = structuredClone(latest)
+          if (updated[realId]) {
+            updated[realId].mode = requestedMode
+          }
+          set({ chats: updated })
         } else {
           response = await messageService.createMessageInChat(localId, {
             content,
+            mode: requestedMode,
           })
+
+          const latest = get().chats
+          const updated = structuredClone(latest)
+          if (updated[localId]) {
+            updated[localId].mode = requestedMode
+          }
+          set({ chats: updated })
         }
 
         const realId = response.data.chatId ?? localId
@@ -258,15 +314,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         const updatedChat = updated[realId]
 
+        const userMessage = {
+          ...response.data.userMessage,
+          mode:
+            response.data.userMessage.mode ||
+            updatedChat?.mode ||
+            requestedMode,
+        }
+
+        const assistantMessage = {
+          ...response.data.assistantMessage,
+          mode:
+            response.data.assistantMessage.mode ||
+            updatedChat?.mode ||
+            requestedMode,
+        }
+        if (response.data.sources && response.data.sources.length > 0) {
+          assistantMessage.sources = response.data.sources
+        }
+
         updatedChat.messages = [
           ...updatedChat.messages.filter((m) => !m._id.startsWith('temp-')),
-          response.data.userMessage,
-          response.data.assistantMessage,
+          userMessage,
+          assistantMessage,
         ]
 
         storage.set('chats', updated)
         set({ chats: updated })
       } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const err: any = error
 
         const backendError =
@@ -284,6 +360,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           chatId: localId,
           userId: null,
           role: 'assistant',
+          mode: updatedChat.mode || requestedMode,
           versions: [
             {
               content: `${backendError}`,
@@ -301,9 +378,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ chats: updated })
       }
 
-      get().loadAllChats()
+      setTimeout(() => {
+        get().loadAllChats()
+      }, 100)
     } finally {
       get().setAssistantTyping(false)
+      get().setAssistantTypingMode(null)
     }
   },
   async editMessage(messageId, content) {
@@ -320,11 +400,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
       )
       if (!chatEntry) return
 
+      const editedUserMessage = {
+        ...data.editedUserMessage,
+        mode:
+          data.editedUserMessage.mode ||
+          chatEntry.mode ||
+          (get().newsMode ? 'news' : 'default'),
+      }
+
+      const newAssistantMessage = {
+        ...data.newAssistantMessage,
+        mode:
+          data.newAssistantMessage.mode ||
+          chatEntry.mode ||
+          (get().newsMode ? 'news' : 'default'),
+      }
+      if (data.sources && data.sources.length > 0) {
+        newAssistantMessage.sources = data.sources
+      }
+
       chatEntry.messages = chatEntry.messages.map((m) =>
         m._id === messageId
-          ? data.editedUserMessage
-          : m._id === data.newAssistantMessage._id
-          ? data.newAssistantMessage
+          ? editedUserMessage
+          : m._id === newAssistantMessage._id
+          ? newAssistantMessage
           : m
       )
 

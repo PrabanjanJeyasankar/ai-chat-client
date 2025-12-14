@@ -1,11 +1,22 @@
 import { apiEndpoints } from '@/api/apiEndpoints'
 import { axiosInstance } from '@/lib/axiosInstance'
 
+export type Source = {
+  title: string
+  url: string
+  source: string
+  lines: string
+  publishedAt: string
+  similarity: number
+  finalScore: number
+}
+
 export type Message = {
   _id: string
   chatId: string
   userId: string | null
   role: 'user' | 'assistant'
+  mode: 'default' | 'news'
   versions: Array<{
     content: string
     model: string | null
@@ -15,10 +26,12 @@ export type Message = {
   currentVersionIndex: number
   createdAt: string
   updatedAt: string
+  sources?: Source[]
 }
 
 export type CreateMessageRequest = {
   content: string
+  mode?: 'default' | 'news'
 }
 
 export type CreateMessageResponse = {
@@ -29,6 +42,7 @@ export type CreateMessageResponse = {
     assistantMessage: Message
     chatId?: string
     title?: string
+    sources?: Source[]
   }
 }
 
@@ -50,6 +64,7 @@ export type EditMessageResponse = {
   data: {
     editedUserMessage: Message
     newAssistantMessage: Message
+    sources?: Source[]
   }
 }
 

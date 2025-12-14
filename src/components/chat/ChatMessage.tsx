@@ -1,6 +1,17 @@
+import { Badge } from '@/components/ui/badge'
 import { Markdown } from '@/components/ui/markdown'
 import { Message } from '@/components/ui/message'
-import { AlertTriangle, Check, Copy, X } from 'lucide-react'
+import type { Source } from '@/services/message.service'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  DatabaseZap,
+  ExternalLink,
+  X,
+} from 'lucide-react'
+import { useState } from 'react'
 
 type Version = {
   content: string
@@ -11,9 +22,11 @@ type Version = {
 
 type ChatMessageProps = {
   role: 'user' | 'assistant'
+  mode?: 'default' | 'news'
   versions?: Version[]
   currentVersionIndex?: number
   messageId: string
+  sources?: Source[]
 
   isEditing?: boolean
   editingContent?: string
@@ -25,9 +38,11 @@ type ChatMessageProps = {
 
 export function ChatMessage({
   role,
+  mode = 'default',
   versions = [],
   currentVersionIndex = 0,
   messageId: _messageId,
+  sources = [],
   isEditing = false,
   editingContent = '',
   onStartEdit: _onStartEdit,
@@ -35,13 +50,25 @@ export function ChatMessage({
   onSave,
   onCancel,
 }: ChatMessageProps) {
+  const [copied, setCopied] = useState(false)
+
   const isUser = role === 'user'
   const version = versions[currentVersionIndex] || {}
   const content = version.content || ''
 
   const isError = version.isError === true
+  const hasSources = !isUser && sources && sources.length > 0
+  const isNewsMode = !isUser && mode === 'news'
 
-  const handleCopy = () => navigator.clipboard.writeText(content)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    } catch {
+      // ignore clipboard errors silently
+    }
+  }
 
   return (
     <div
@@ -59,12 +86,27 @@ export function ChatMessage({
           </Message>
         ) : (
           <>
+            {isNewsMode && (
+              <div
+                className={
+                  'flex items-center gap-1 h-6 px-2 rounded-full border bg-primary/15 border-primary/10 text-primary mb-2'
+                }
+                aria-hidden='true'>
+                <div className='w-4 h-4 flex items-center justify-center'>
+                  <DatabaseZap className='size-3 text-primary' />
+                </div>
+
+                <span className='text-xs font-medium whitespace-nowrap'>
+                  News
+                </span>
+              </div>
+            )}
             <Message
-              className={`w-fit p-4 break-words overflow-wrap-anywhere max-w-full
+              className={`w-fit wrap-break-word overflow-wrap-anywhere max-w-full
                 ${
                   isUser
-                    ? 'bg-primary text-primary-foreground rounded-2xl rounded-br-none'
-                    : 'bg-muted rounded-2xl rounded-bl-none'
+                    ? 'bg-primary text-primary-foreground rounded-2xl rounded-br-none px-4 py-2'
+                    : 'bg-muted rounded-2xl rounded-bl-none p-4'
                 }
               `}>
               {isEditing ? (
@@ -80,6 +122,33 @@ export function ChatMessage({
                 <Markdown className='text-sm'>{content}</Markdown>
               )}
             </Message>
+
+            {hasSources && (
+              <div className='mt-3 space-y-2 w-full'>
+                <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                  <span className='font-medium'>📚 Sources</span>
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  {sources.map((source, idx) => (
+                    <a
+                      key={idx}
+                      href={source.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='group'>
+                      <Badge
+                        variant='secondary'
+                        className='flex items-center gap-1.5 py-1.5 px-3 hover:bg-primary/10 transition-colors cursor-pointer'>
+                        <span className='text-xs font-medium truncate max-w-[200px]'>
+                          {source.title}
+                        </span>
+                        <ExternalLink className='h-3 w-3 flex-shrink-0 opacity-60 group-hover:opacity-100' />
+                      </Badge>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {!isError && (
               <div
@@ -110,8 +179,28 @@ export function ChatMessage({
                     <button
                       onClick={handleCopy}
                       className='p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors'
-                      title='Copy'>
-                      <Copy className='h-4 w-4' />
+                      title={copied ? 'Copied' : 'Copy'}>
+                      <AnimatePresence initial={false} mode='wait'>
+                        {copied ? (
+                          <motion.span
+                            key='copied'
+                            initial={{ opacity: 0, scale: 0.8, y: 4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: -4 }}
+                            transition={{ duration: 0.18 }}>
+                            <Check className='h-4 w-4 text-primary' />
+                          </motion.span>
+                        ) : (
+                          <motion.span
+                            key='copy'
+                            initial={{ opacity: 0, scale: 0.8, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 4 }}
+                            transition={{ duration: 0.18 }}>
+                            <Copy className='h-4 w-4' />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
                     </button>
 
                     {/* {isUser && (
