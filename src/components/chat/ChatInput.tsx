@@ -6,7 +6,7 @@ import {
   PromptInputTextarea,
 } from '@/components/ui/prompt-input'
 import { MAX_SINGLE_MESSAGE_CHARS } from '@/config/llmLmits'
-import { useChatStore } from '@/store/chat.store'
+import { useChatStore } from '@/domain/chat/chat.store'
 import { ArrowUp, Square } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -22,7 +22,7 @@ type ChatInputProps = {
 export function ChatInput({
   onSendMessage,
   isLoading,
-  onStop,
+  onStop = () => {},
   disabled = false,
 }: ChatInputProps) {
   const [input, setInput] = useState('')

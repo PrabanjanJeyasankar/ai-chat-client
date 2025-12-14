@@ -24,8 +24,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useChatStore } from '@/domain/chat/chat.store'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { useChatStore } from '@/store/chat.store'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 

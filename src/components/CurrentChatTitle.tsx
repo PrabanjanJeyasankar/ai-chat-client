@@ -1,4 +1,4 @@
-import { useChatStore } from '@/store/chat.store'
+import { useChatStore } from '@/domain/chat/chat.store'
 
 export default function CurrentChatTitle() {
   const { currentChatId, history } = useChatStore()

@@ -6,13 +6,33 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { type ReactNode } from 'react'
+import { useChatStore } from '@/domain/chat/chat.store'
+import { type ReactNode, useEffect } from 'react'
 
 export type ChatLayoutProps = {
   children: ReactNode
 }
 
 export function ChatLayout({ children }: ChatLayoutProps) {
+  const { connectWebSocket, disconnectWebSocket } = useChatStore()
+
+  useEffect(() => {
+    const initWebSocket = async () => {
+      try {
+        await connectWebSocket()
+        console.log('[ChatLayout] WebSocket connected successfully')
+      } catch (error) {
+        console.error('[ChatLayout] WebSocket connection failed:', error)
+      }
+    }
+
+    initWebSocket()
+
+    return () => {
+      disconnectWebSocket()
+    }
+  }, [connectWebSocket, disconnectWebSocket])
+
   return (
     <div className='h-dvh w-screen overflow-hidden fixed inset-0'>
       <SidebarProvider className='h-full overflow-hidden'>

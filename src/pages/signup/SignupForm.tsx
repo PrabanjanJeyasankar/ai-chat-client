@@ -1,4 +1,3 @@
-// SignupForm.tsx
 import { Button } from '@/components/ui/button'
 import { FieldGroup } from '@/components/ui/field'
 import { useState, type FormEvent } from 'react'
@@ -6,9 +5,9 @@ import { useNavigate } from 'react-router-dom'
 
 import { ValidatedInput } from '@/components/common/ValidateInput'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { authClient } from '@/domain/auth/auth.client'
+import { useAuthStore } from '@/domain/auth/auth.store'
 import { cn } from '@/lib/utils'
-import { authService } from '@/services/auth.service'
-import { authStore } from '@/store/auth.store'
 import {
   validateEmail,
   validateName,
@@ -59,19 +58,20 @@ export default function SignupForm({
     setIsSubmitting(true)
 
     try {
-      await authService.signup({
+      await authClient.signup({
         email: emailValue,
         password: passwordValue,
         name: nameValue,
       })
 
-      const profile = await authService.getMe()
-      authStore.getState().setCurrentUser(profile.data.user)
+      const profile = await authClient.getProfile()
+      useAuthStore.getState().setCurrentUser(profile.data.user)
 
       navigate('/chat')
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
-        error?.response?.data?.message || 'Signup failed. Try again.'
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || 'Signup failed. Try again.'
 
       if (message.includes('Email already registered')) {
         setServerError(message)

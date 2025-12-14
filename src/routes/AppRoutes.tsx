@@ -1,5 +1,3 @@
-// src/routes/AppRoutes.tsx
-
 import { BrowserRouter, Navigate, useRoutes } from 'react-router-dom'
 import { privateRoutes } from './private-routes'
 import { publicRoutes } from './public-routes'

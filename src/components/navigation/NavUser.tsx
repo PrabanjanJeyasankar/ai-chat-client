@@ -15,8 +15,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { authStore } from '@/store/auth.store'
-import { useChatStore } from '@/store/chat.store'
+import { useAuthStore } from '@/domain/auth/auth.store'
+import { useChatStore } from '@/domain/chat/chat.store'
 import { useThemeStore } from '../ui/theme-provider'
 
 export function NavUser({
@@ -33,7 +33,7 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      await authStore.getState().logoutUser()
+      await useAuthStore.getState().logout()
     } catch (error) {
       console.error('Logout error:', error)
     }

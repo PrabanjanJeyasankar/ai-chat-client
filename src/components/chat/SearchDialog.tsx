@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { SearchResultItem } from '@/services/search.service'
+import type { SearchResultItem } from '@/domain/search/search.client'
 import { debounce } from '@/utils/debounce'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search } from 'lucide-react'

@@ -1,25 +1,17 @@
 import { create } from 'zustand'
+import { authClient } from './auth.client'
+import type { UserProfile } from './auth.types'
 
-export type UserProfile = {
-  id: string
-  email: string
-  name?: string
-  isActive?: boolean
-  createdAt?: string
-  updatedAt?: string
-}
-
-export type AuthState = {
+type AuthState = {
   currentUser: UserProfile | null
   isAuthenticated: boolean
   isLoading: boolean
-
   setCurrentUser: (user: UserProfile | null) => void
-  logoutUser: (force?: boolean) => Promise<void>
+  logout: (force?: boolean) => Promise<void>
   syncUser: () => Promise<void>
 }
 
-export const authStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   isAuthenticated: false,
   isLoading: true,
@@ -32,13 +24,10 @@ export const authStore = create<AuthState>((set) => ({
     })
   },
 
-  logoutUser: async (force = false) => {
-    console.log('[auth.store] Logout triggered, force:', force)
-
+  logout: async (force = false) => {
     if (!force) {
       try {
-        const { authService } = await import('@/services/auth.service')
-        await authService.logout()
+        await authClient.logout()
       } catch (error) {
         console.error('Logout error:', error)
       }
@@ -53,8 +42,7 @@ export const authStore = create<AuthState>((set) => ({
 
   syncUser: async () => {
     try {
-      const { authService } = await import('@/services/auth.service')
-      const response = await authService.getMe()
+      const response = await authClient.getProfile()
       set({
         currentUser: response.data.user,
         isAuthenticated: true,

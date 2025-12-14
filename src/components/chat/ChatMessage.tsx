@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Markdown } from '@/components/ui/markdown'
 import { Message } from '@/components/ui/message'
-import type { Source } from '@/services/message.service'
+import type { Source } from '@/domain/chat/chat.types'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertTriangle,
@@ -142,7 +142,7 @@ export function ChatMessage({
                         <span className='text-xs font-medium truncate max-w-[200px]'>
                           {source.title}
                         </span>
-                        <ExternalLink className='h-3 w-3 flex-shrink-0 opacity-60 group-hover:opacity-100' />
+                        <ExternalLink className='h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100' />
                       </Badge>
                     </a>
                   ))}

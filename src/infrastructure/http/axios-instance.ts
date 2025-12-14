@@ -1,12 +1,11 @@
 import { apiEndpoints } from '@/api/apiEndpoints'
 import { environment } from '@/api/environment'
-import { authStore } from '@/store/auth.store'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import axios from 'axios'
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: environment.apiBaseUrl,
-  timeout: 60000,
+  timeout: 180000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,7 +37,6 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Don't retry for these endpoints
     const skipRefreshUrls = [
       '/auth/refresh',
       '/auth/me',
@@ -54,10 +52,7 @@ axiosInstance.interceptors.response.use(
       !originalRequest._retry &&
       !shouldSkipRefresh
     ) {
-      console.log('[axios] 401 received, checking if refresh needed...')
-
       if (isRefreshing) {
-        console.log('[axios] Already refreshing, adding to queue...')
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         })
@@ -73,7 +68,6 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
-        console.log('[axios] Attempting token refresh...')
         await axiosInstance.post(
           apiEndpoints.auth.refresh,
           {},
@@ -82,7 +76,6 @@ axiosInstance.interceptors.response.use(
           }
         )
 
-        console.log('[axios] Token refresh successful')
         processQueue()
         isRefreshing = false
 
@@ -106,19 +99,10 @@ axiosInstance.interceptors.response.use(
         }
 
         if (refreshStatus === 401 || refreshStatus === 403) {
-          console.log(
-            '[axios] Refresh failed with 401/403, scheduling logout...'
-          )
+          const { useAuthStore } = await import('@/domain/auth/auth.store')
           setTimeout(() => {
-            console.log('[axios] Executing logout due to refresh failure')
-            authStore.getState().logoutUser(true)
+            useAuthStore.getState().logout(true)
           }, 1000)
-        } else {
-          console.log(
-            '[axios] Refresh failed with status:',
-            refreshStatus,
-            'not logging out'
-          )
         }
 
         return Promise.reject(refreshError)

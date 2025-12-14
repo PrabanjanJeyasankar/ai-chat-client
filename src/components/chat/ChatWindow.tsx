@@ -1,14 +1,13 @@
 import { ChatInput } from '@/components/chat/ChatInput'
 import { ChatMessage } from '@/components/chat/ChatMessage'
-import { Loader } from '@/components/ui/loader'
+import { ChatProgressIndicator } from '@/components/chat/ChatProgressIndicator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { WELCOME_MESSAGES } from '@/constants/chat.constants'
-import { useChatStore } from '@/store/chat.store'
+import { useChatStore } from '@/domain/chat/chat.store'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDown } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { ShimmerLoaderText } from '../ShimmerTextLoader'
 
 export function ChatWindow() {
   const { chatId } = useParams<{ chatId?: string }>()
@@ -20,7 +19,7 @@ export function ChatWindow() {
     sendMessage,
     editMessage,
     isAssistantTyping,
-    assistantTypingMode,
+    cancelInFlightMessage,
     welcomeMessageTrigger,
     isChatLoading,
   } = useChatStore()
@@ -29,7 +28,6 @@ export function ChatWindow() {
   const [editingContent, setEditingContent] = useState<string>('')
   const [showScrollDown, setShowScrollDown] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [newsLoaderIndex, setNewsLoaderIndex] = useState(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -69,29 +67,6 @@ export function ChatWindow() {
   const messages = useMemo(() => chat?.messages ?? [], [chat?.messages])
 
   const isNewChat = messages.length === 0
-  const isNewsActive = assistantTypingMode === 'news'
-
-  const newsPhrases = useMemo(
-    () => [
-      'Scanning the latest headlines...',
-      'Pulling fresh articles...',
-      'Ranking relevant sources...',
-      'Citing trusted outlets...',
-      'Cross-checking details...',
-      'Curating your brief...',
-    ],
-    []
-  )
-
-  useEffect(() => {
-    if (!isAssistantTyping || !isNewsActive) return
-
-    const id = setInterval(() => {
-      setNewsLoaderIndex((prev) => (prev + 1) % newsPhrases.length)
-    }, 1600)
-
-    return () => clearInterval(id)
-  }, [isAssistantTyping, isNewsActive, newsPhrases.length])
 
   useEffect(() => {
     const msgId = searchParams.get('msgId')
@@ -219,7 +194,8 @@ export function ChatWindow() {
                     <div className='w-full max-w-2xl'>
                       <ChatInput
                         onSendMessage={handleSendMessage}
-                        isLoading={false}
+                        isLoading={isAssistantTyping}
+                        onStop={cancelInFlightMessage}
                       />
                     </div>
                   </motion.div>
@@ -254,22 +230,7 @@ export function ChatWindow() {
                 {isAssistantTyping && (
                   <div className='flex w-full justify-start my-2'>
                     <div className='max-w-[75%] bg-muted rounded-2xl p-4'>
-                      {isNewsActive ? (
-                        <AnimatePresence mode='wait'>
-                          <motion.div
-                            key={newsPhrases[newsLoaderIndex]}
-                            initial={{ opacity: 0, y: 14 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -14 }}
-                            transition={{ duration: 0.35 }}>
-                            <ShimmerLoaderText
-                              text={newsPhrases[newsLoaderIndex]}
-                            />
-                          </motion.div>
-                        </AnimatePresence>
-                      ) : (
-                        <Loader variant='typing' size='md' />
-                      )}
+                      <ChatProgressIndicator />
                     </div>
                   </div>
                 )}
@@ -292,14 +253,18 @@ export function ChatWindow() {
         </button>
       )}
 
-      <div className='pointer-events-none absolute bottom-[72px] left-0 right-0 h-32 bg-gradient-to-b from-background/0 via-background/70 to-background' />
+      <div className='pointer-events-none absolute bottom-[72px] left-0 right-0 h-32 bg-linear-to-b from-background/0 via-background/70 to-background' />
 
       {!isNewChat && (
         <motion.div
           layoutId='chat-input'
           className='absolute bottom-0 left-0 right-0 bg-background'>
           <div className='mx-auto max-w-3xl'>
-            <ChatInput onSendMessage={handleSendMessage} isLoading={false} />
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              isLoading={isAssistantTyping}
+              onStop={cancelInFlightMessage}
+            />
           </div>
         </motion.div>
       )}

@@ -12,7 +12,7 @@ export function ShimmerLoaderText({ text, className }: ShimmerLoaderTextProps) {
   return (
     <motion.p
       className={cn(
-        'text-sm font-medium bg-[length:600%_100%] bg-clip-text text-transparent',
+        'text-sm font-medium bg-size-[600%_100%] bg-clip-text text-transparent',
         'bg-linear-to-r from-white via-black to-white',
         className
       )}

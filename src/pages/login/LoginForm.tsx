@@ -1,11 +1,10 @@
-// LoginForm.tsx
 import { ValidatedInput } from '@/components/common/ValidateInput'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { Button } from '@/components/ui/button'
 import { FieldGroup } from '@/components/ui/field'
+import { authClient } from '@/domain/auth/auth.client'
+import { useAuthStore } from '@/domain/auth/auth.store'
 import { cn } from '@/lib/utils'
-import { authService } from '@/services/auth.service'
-import { authStore } from '@/store/auth.store'
 import {
   validateEmail,
   validatePassword,
@@ -51,18 +50,19 @@ export default function LoginForm({
     setIsSubmitting(true)
 
     try {
-      await authService.login({
+      await authClient.login({
         email: emailValue,
         password: passwordValue,
       })
 
-      const profile = await authService.getMe()
-      authStore.getState().setCurrentUser(profile.data.user)
+      const profile = await authClient.getProfile()
+      useAuthStore.getState().setCurrentUser(profile.data.user)
 
       navigate('/chat')
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
-        error?.response?.data?.message || 'Login failed. Try again.'
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || 'Login failed. Try again.'
       setServerError(message)
     } finally {
       setIsSubmitting(false)

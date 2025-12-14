@@ -1,5 +1,5 @@
 import { SearchDialog } from '@/components/chat/SearchDialog'
-import { searchService } from '@/services/search.service'
+import { searchService } from '@/domain/search/search.client'
 import { useState } from 'react'
 
 import {
@@ -12,8 +12,8 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-import { authStore } from '@/store/auth.store'
-import { useChatStore } from '@/store/chat.store'
+import { useAuthStore } from '@/domain/auth/auth.store'
+import { useChatStore } from '@/domain/chat/chat.store'
 import { Logo } from '../Logo'
 import { NavChatActions } from './NavChatAction'
 import { NavChatHistory } from './NavChatHistory'
@@ -26,7 +26,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
-  const currentUser = authStore((s) => s.currentUser)
+  const currentUser = useAuthStore((s) => s.currentUser)
   const { loadAllChats, setCurrentChat, refreshWelcomeMessage } = useChatStore()
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SearchDialog
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onSearch={searchService.searchMessages}
+        onSearch={searchService.search}
       />
     </>
   )

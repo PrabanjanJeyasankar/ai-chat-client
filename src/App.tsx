@@ -1,4 +1,4 @@
-import { authStore } from '@/store/auth.store'
+import { useAuthStore } from '@/domain/auth/auth.store'
 import { Loader } from 'lucide-react'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
@@ -7,8 +7,8 @@ import { ThemeProvider } from './components/ui/theme-provider'
 import { AppRoutes } from './routes/AppRoutes'
 
 function App() {
-  const syncUser = authStore((state) => state.syncUser)
-  const isLoading = authStore((state) => state.isLoading)
+  const syncUser = useAuthStore((state) => state.syncUser)
+  const isLoading = useAuthStore((state) => state.isLoading)
 
   useEffect(() => {
     syncUser()
