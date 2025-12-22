@@ -2,6 +2,8 @@ import { environment } from '@/api/environment'
 import { useAuthStore } from '@/domain/auth/auth.store'
 import { io, Socket } from 'socket.io-client'
 import type {
+  ChainOfThoughtsEvent,
+  MessageChunkEvent,
   MessageEvent,
   MessageProgressEvent,
   SendMessageRequest,
@@ -143,6 +145,14 @@ class WebSocketClient {
     this.socket?.on('message:error', callback)
   }
 
+  onMessageChunk(callback: (chunk: MessageChunkEvent) => void) {
+    this.socket?.on('message:chunk', callback)
+  }
+
+  onChainOfThoughts(callback: (data: ChainOfThoughtsEvent) => void) {
+    this.socket?.on('message:chain_of_thoughts', callback)
+  }
+
   offMessageProgress(callback?: (progress: MessageProgressEvent) => void) {
     this.socket?.off('message:progress', callback)
   }
@@ -157,6 +167,14 @@ class WebSocketClient {
 
   offMessageError(callback?: (event: MessageEvent) => void) {
     this.socket?.off('message:error', callback)
+  }
+
+  offMessageChunk(callback?: (chunk: MessageChunkEvent) => void) {
+    this.socket?.off('message:chunk', callback)
+  }
+
+  offChainOfThoughts(callback?: (data: ChainOfThoughtsEvent) => void) {
+    this.socket?.off('message:chain_of_thoughts', callback)
   }
 
   disconnect() {

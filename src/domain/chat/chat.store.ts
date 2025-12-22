@@ -11,6 +11,20 @@ import { storage } from '@/infrastructure/storage/local-storage'
 import { webSocketClient } from '@/infrastructure/websocket/websocket.client'
 import { create } from 'zustand'
 
+type ChainOfThoughtsPhase = {
+  phase: string
+  status: string
+  analysis?: string
+  strategy?: string
+  evaluation?: string
+  sourceCount?: number
+  reasoning?: string
+  phases?: number
+  timestamp: string
+}
+
+type ChainOfThoughtsData = Record<string, ChainOfThoughtsPhase>
+
 type ChatState = {
   chats: Record<string, Chat>
   currentChatId: string | null
@@ -23,6 +37,9 @@ type ChatState = {
   isWebSocketConnected: boolean
   webSocketError: string | null
   messageProgress: Record<string, MessageProgress>
+  streamingMessageId: string | null
+  streamingContent: string
+  chainOfThoughts: Record<string, ChainOfThoughtsData>
   error: string | null
   isChatLoading: boolean
 
@@ -68,6 +85,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isWebSocketConnected: false,
   webSocketError: null,
   messageProgress: {},
+  streamingMessageId: null,
+  streamingContent: '',
+  chainOfThoughts: {},
   error: null,
 
   setNewsMode(enabled) {
@@ -84,6 +104,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isAssistantTyping: false,
       assistantTypingMode: null,
       messageProgress: {},
+      streamingMessageId: null,
+      streamingContent: '',
     })
   },
 
@@ -111,6 +133,78 @@ export const useChatStore = create<ChatState>((set, get) => ({
           messageProgress: {
             ...current,
             [progress.messageId]: mergedDetails,
+          },
+        })
+      })
+
+      webSocketClient.onMessageChunk((chunk) => {
+        const { messageId, fullContent } = chunk
+        const currentChatId = get().currentChatId
+        if (!currentChatId) return
+
+        set({
+          streamingMessageId: messageId,
+          streamingContent: fullContent,
+        })
+
+        // Update the assistant message in real-time
+        const chats = get().chats
+        const chat = chats[currentChatId]
+        if (!chat) return
+
+        const updated = structuredClone(chats)
+        const updatedChat = updated[currentChatId]
+
+        // Find or create streaming assistant message
+        let assistantMsg = updatedChat.messages.find(
+          (m) => m.role === 'assistant' && m._id.startsWith('streaming-')
+        )
+
+        if (!assistantMsg) {
+          assistantMsg = {
+            _id: `streaming-${messageId}`,
+            chatId: currentChatId,
+            userId: null,
+            role: 'assistant',
+            mode: get().assistantTypingMode || 'default',
+            versions: [
+              {
+                content: fullContent,
+                model: null,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+            currentVersionIndex: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          updatedChat.messages.push(assistantMsg)
+        } else {
+          assistantMsg.versions[0].content = fullContent
+        }
+
+        set({ chats: updated })
+      })
+
+      webSocketClient.onChainOfThoughts((data) => {
+        const current = get().chainOfThoughts
+        set({
+          chainOfThoughts: {
+            ...current,
+            [data.messageId]: {
+              ...current[data.messageId],
+              [data.phase]: {
+                phase: data.phase,
+                status: data.status,
+                analysis: data.analysis,
+                strategy: data.strategy,
+                evaluation: data.evaluation,
+                sourceCount: data.sourceCount,
+                reasoning: data.reasoning,
+                phases: data.phases,
+                timestamp: data.timestamp,
+              },
+            },
           },
         })
       })
@@ -144,6 +238,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           console.error('[WebSocket] Error handling message completed:', error)
         } finally {
           get().clearMessageProgress(event.messageId)
+          set({ streamingMessageId: null, streamingContent: '' })
           get().setAssistantTyping(false)
           get().setAssistantTypingMode(null)
         }
@@ -157,6 +252,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           console.error('[WebSocket] Error handling message error:', error)
         } finally {
           get().clearMessageProgress(event.messageId)
+          set({ streamingMessageId: null, streamingContent: '' })
           get().setAssistantTyping(false)
         }
       })
@@ -403,6 +499,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         chatId: chat.isTemporary ? null : localId,
         content,
         mode: requestedMode,
+        streaming: true,
       })
 
       console.log(`[WebSocket] Message sent successfully: ${messageId}`)
@@ -483,7 +580,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
             : m?.versions?.[0]
         const isEphemeralError =
           m?.role === 'assistant' && version?.isError === true
-        return !m._id.startsWith('temp-') && !isEphemeralError
+        const isStreamingMessage = m._id.startsWith('streaming-')
+        return (
+          !m._id.startsWith('temp-') && !isEphemeralError && !isStreamingMessage
+        )
       }),
       userMessage,
       assistantMessage,

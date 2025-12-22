@@ -30,4 +30,27 @@ export type SendMessageRequest = {
   chatId: string | null
   content: string
   mode?: ChatMode
+  streaming?: boolean
+}
+
+export type MessageChunkEvent = {
+  messageId: string
+  type: 'chunk'
+  content: string
+  fullContent: string
+  chunkIndex: number
+  timestamp: string
+}
+
+export type ChainOfThoughtsEvent = {
+  messageId: string
+  phase: string
+  status: string
+  analysis?: string
+  strategy?: string
+  evaluation?: string
+  sourceCount?: number
+  reasoning?: string
+  phases?: number
+  timestamp: string
 }

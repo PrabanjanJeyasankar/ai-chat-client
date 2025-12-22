@@ -45,6 +45,11 @@ export function NavChatHistory() {
   const [renameId, setRenameId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+
+  const deleteChatTitle = deleteId
+    ? (history.find((c) => c._id === deleteId)?.title ?? 'Untitled')
+    : 'Untitled'
 
   const openChat = async (id: string) => {
     if (renameId === id) {
@@ -133,13 +138,17 @@ export function NavChatHistory() {
                   </button>
                 </SidebarMenuButton>
 
-                <DropdownMenu>
+                <DropdownMenu
+                  open={openMenuId === id}
+                  onOpenChange={(open) => setOpenMenuId(open ? id : null)}>
                   {renameId !== id && (
                     <DropdownMenuTrigger
                       className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 rounded-md ${
                         isMobile
                           ? 'opacity-100'
-                          : 'opacity-0 group-hover/item:opacity-100 translate-x-1 group-hover/item:translate-x-0 transition-all duration-200'
+                          : openMenuId === id
+                            ? 'opacity-100 translate-x-0'
+                            : 'opacity-0 group-hover/item:opacity-100 translate-x-1 group-hover/item:translate-x-0 transition-all duration-200'
                       }`}>
                       <MoreHorizontal className='size-4' />
                     </DropdownMenuTrigger>
@@ -165,12 +174,20 @@ export function NavChatHistory() {
         </SidebarMenu>
       </SidebarGroupContent>
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null)
+        }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone.
+              This will permanently delete{' '}
+              <span className='font-medium text-foreground'>
+                “{deleteChatTitle || 'Untitled'}”
+              </span>
+              . This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
