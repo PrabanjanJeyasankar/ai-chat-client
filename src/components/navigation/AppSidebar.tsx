@@ -68,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Logo />
                   </div>
                   <div className='grid flex-1 text-left text-sm leading-tight'>
-                    <span className='truncate font-medium'>AI Chat</span>
+                    <span className='truncate font-medium'>Trace</span>
                     <span className='truncate text-xs'>Personal Workspace</span>
                   </div>
                 </a>

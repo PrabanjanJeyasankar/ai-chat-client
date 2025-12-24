@@ -1,4 +1,4 @@
-import type { ChatMode } from '@/domain/chat/chat.types'
+import type { ChatMode, Source } from '@/domain/chat/chat.types'
 
 export type MessageProgressEvent = {
   messageId: string
@@ -24,6 +24,16 @@ export type MessageEvent = {
     message: string
     code: number
   }
+}
+
+export interface LLMCompleteEvent {
+  messageId: string
+  type?: 'complete'
+  assistantReply?: string
+  title?: string | null
+  totalChunks?: number
+  sources?: Source[]
+  timestamp: string
 }
 
 export type SendMessageRequest = {

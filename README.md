@@ -1,4 +1,4 @@
-# AI Chat Client
+# Trace Client
 
 A React-based AI Chat application offering a interface with markdown support, and chat history management.
 

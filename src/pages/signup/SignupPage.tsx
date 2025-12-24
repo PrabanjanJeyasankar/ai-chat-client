@@ -4,7 +4,7 @@ import SignupForm from './SignupForm'
 export default function SignupPage() {
   return (
     <AuthLayout
-      title='Welcome to AI Chat'
+      title='Trace Welcomes You!'
       description={
         <>
           Already have an account? <a href='/login'>Sign in</a>

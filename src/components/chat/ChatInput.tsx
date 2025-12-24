@@ -10,7 +10,7 @@ import { useChatStore } from '@/domain/chat/chat.store'
 import { ArrowUp, Square } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { NewsModeToggle } from '../NewsModeToggleButton'
+import { ModeToggle } from '../ModeToggle'
 
 type ChatInputProps = {
   onSendMessage: (content: string) => void
@@ -27,7 +27,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false)
-  const { newsMode, setNewsMode } = useChatStore()
+  const { mode, setMode } = useChatStore()
 
   const getCharCount = (text: string) => [...text].length
 
@@ -76,13 +76,12 @@ export function ChatInput({
 
           <PromptInputActions className='flex items-center justify-between pt-2 w-full px-1'>
             <div className='flex items-center gap-2'>
-              <NewsModeToggle
-                enabled={newsMode}
-                onToggle={() => {
-                  setNewsMode(!newsMode)
-                  toast.success(
-                    newsMode ? 'News mode disabled' : 'News mode enabled'
-                  )
+              <ModeToggle
+                mode={mode}
+                onModeChange={(newMode) => {
+                  setMode(newMode)
+                  const modeLabel = newMode === 'default' ? 'Default' : newMode === 'news' ? 'News' : 'Law'
+                  toast.success(`${modeLabel} mode ${newMode === 'default' ? 'disabled' : 'enabled'}`)
                 }}
               />
 

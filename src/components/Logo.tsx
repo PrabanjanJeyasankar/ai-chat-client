@@ -1,4 +1,4 @@
-import logoImage from '@/assets/images/logo.png'
+import logoImage from '@/assets/images/Trace_Logo.png'
 import { cn } from '@/lib/utils'
 
 type LogoProps = {

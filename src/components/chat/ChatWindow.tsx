@@ -1,5 +1,5 @@
+import { ChatMessage } from '@/components/chat/chat-message'
 import { ChatInput } from '@/components/chat/ChatInput'
-import { ChatMessage } from '@/components/chat/ChatMessage'
 import { ChatProgressIndicator } from '@/components/chat/ChatProgressIndicator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { WELCOME_MESSAGES } from '@/constants/chat.constants'

@@ -1,4 +1,4 @@
-export type ChatMode = 'default' | 'news'
+export type ChatMode = 'default' | 'news' | 'law'
 
 export type MessageRole = 'user' | 'assistant'
 
@@ -9,7 +9,8 @@ export type MessageVersion = {
   isError?: boolean
 }
 
-export type Source = {
+// News mode source
+export type NewsSource = {
   title: string
   url: string
   source: string
@@ -18,6 +19,19 @@ export type Source = {
   similarity: number
   finalScore: number
 }
+
+// Law mode source
+export type LawSource = {
+  doc_id: string
+  chunk_index: number
+  text: string
+  page_number: number
+  pdf_url: string
+  similarity: number
+  finalScore: number
+}
+
+export type Source = NewsSource | LawSource
 
 export type Message = {
   _id: string

@@ -21,16 +21,12 @@ export function AuthLayout({
   const { theme, toggleTheme } = useThemeStore()
 
   return (
-    <div
-      className={cn(
-        'bg-background min-h-svh flex items-center justify-center p-6 relative',
-        className
-      )}>
+    <div className={cn('bg-background min-h-svh relative', className)}>
       <Button
         variant='ghost'
         size='icon'
         onClick={toggleTheme}
-        className='absolute top-4 right-4'>
+        className='absolute top-4 left-4'>
         {theme === 'dark' ? (
           <Sun className='h-5 w-5' />
         ) : (
@@ -38,20 +34,25 @@ export function AuthLayout({
         )}
       </Button>
 
-      <div className='w-full max-w-sm flex flex-col'>
-        <div className='flex flex-col items-center text-center mb-6 gap-2'>
-          <a href='#' className='flex flex-col items-center gap-2 font-medium'>
-            <div className='flex size-8 items-center justify-center rounded-md'>
-              <Logo />
+      <div className='grid min-h-svh w-full grid-cols-1 md:grid-cols-2'>
+        <div className='flex items-center justify-center px-6 py-10'>
+          <div className='w-full max-w-sm'>
+            <div className='mb-6 text-center'>
+              <a href='/' className='mb-6 inline-flex items-center gap-2'>
+                <div className='flex size-8 items-center justify-center rounded-md'>
+                  <Logo />
+                </div>
+              </a>
+              <h1 className='text-2xl font-bold'>{title}</h1>
+              <div className='mt-2 text-sm text-muted-foreground'>
+                {description}
+              </div>
             </div>
-            <span className='sr-only'>AI Chat.</span>
-          </a>
-
-          <h1 className='text-xl font-bold'>{title}</h1>
-          <div className='text-sm text-muted-foreground'>{description}</div>
+            <div className='overflow-visible'>{children}</div>
+          </div>
         </div>
 
-        <div className='flex-1 overflow-visible'>{children}</div>
+        <div className='hidden bg-white md:block' />
       </div>
     </div>
   )

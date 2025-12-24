@@ -3,6 +3,7 @@ import { useAuthStore } from '@/domain/auth/auth.store'
 import { io, Socket } from 'socket.io-client'
 import type {
   ChainOfThoughtsEvent,
+  LLMCompleteEvent,
   MessageChunkEvent,
   MessageEvent,
   MessageProgressEvent,
@@ -153,6 +154,10 @@ class WebSocketClient {
     this.socket?.on('message:chain_of_thoughts', callback)
   }
 
+  onLLMComplete(callback: (data: LLMCompleteEvent) => void) {
+    this.socket?.on('message:llm_complete', callback)
+  }
+
   offMessageProgress(callback?: (progress: MessageProgressEvent) => void) {
     this.socket?.off('message:progress', callback)
   }
@@ -175,6 +180,10 @@ class WebSocketClient {
 
   offChainOfThoughts(callback?: (data: ChainOfThoughtsEvent) => void) {
     this.socket?.off('message:chain_of_thoughts', callback)
+  }
+
+  offLLMComplete(callback?: (data: LLMCompleteEvent) => void) {
+    this.socket?.off('message:llm_complete', callback)
   }
 
   disconnect() {

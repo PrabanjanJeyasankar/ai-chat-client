@@ -76,14 +76,17 @@ MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock'
 function MarkdownComponent({
   children,
   className,
-  components = INITIAL_COMPONENTS,
+  components,
   ...props
 }: MarkdownProps) {
+  const mergedComponents = components
+    ? { ...INITIAL_COMPONENTS, ...components }
+    : INITIAL_COMPONENTS
   return (
     <div className={cn('overflow-x-auto max-w-full', className)} {...props}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
-        components={components}>
+        components={mergedComponents}>
         {children}
       </ReactMarkdown>
     </div>

@@ -28,7 +28,7 @@ type ChainOfThoughtsData = Record<string, ChainOfThoughtsPhase>
 type ChatState = {
   chats: Record<string, Chat>
   currentChatId: string | null
-  newsMode: boolean
+  mode: ChatMode
   history: ChatListItem[]
   hasHydrated: boolean
   welcomeMessageTrigger: number
@@ -43,7 +43,7 @@ type ChatState = {
   error: string | null
   isChatLoading: boolean
 
-  setNewsMode: (enabled: boolean) => void
+  setMode: (mode: ChatMode) => void
   loadAllChats: () => Promise<void>
   refreshWelcomeMessage: () => void
   setAssistantTyping: (typing: boolean) => void
@@ -76,7 +76,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chats: storage.get<Record<string, Chat>>('chats') || {},
   currentChatId: null,
   isChatLoading: false,
-  newsMode: storage.get<boolean>('newsMode') ?? false,
+  mode: storage.get<ChatMode>('chatMode') ?? 'default',
   history: [],
   hasHydrated: false,
   assistantTypingMode: null,
@@ -90,9 +90,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chainOfThoughts: {},
   error: null,
 
-  setNewsMode(enabled) {
-    storage.set('newsMode', enabled)
-    set({ newsMode: enabled })
+  setMode(mode) {
+    storage.set('chatMode', mode)
+    set({ mode })
   },
 
   setAssistantTypingMode(mode) {
@@ -100,12 +100,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   cancelInFlightMessage() {
+    const currentChatId = get().currentChatId
+    if (currentChatId) {
+      const chats = get().chats
+      const chat = chats[currentChatId]
+      if (chat) {
+        const updated = structuredClone(chats)
+        const updatedChat = updated[currentChatId]
+        updatedChat.messages = updatedChat.messages.filter(
+          (m) => !m._id.startsWith('streaming-')
+        )
+        set({ chats: updated })
+      }
+    }
+
     set({
       isAssistantTyping: false,
       assistantTypingMode: null,
       messageProgress: {},
       streamingMessageId: null,
       streamingContent: '',
+      chainOfThoughts: {},
     })
   },
 
@@ -116,6 +131,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ isWebSocketConnected: true })
 
       webSocketClient.onMessageProgress((progress) => {
+        console.log('⏳ Message Progress:', progress)
+
         const current = get().messageProgress
         const details = progress?.details || {}
         const mergedDetails = {
@@ -138,6 +155,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       })
 
       webSocketClient.onMessageChunk((chunk) => {
+        console.log('📨 Message Chunk:', {
+          messageId: chunk.messageId,
+          chunkIndex: chunk.chunkIndex,
+          contentLength: chunk.content?.length,
+          fullContentLength: chunk.fullContent?.length,
+        })
+
         const { messageId, fullContent } = chunk
         const currentChatId = get().currentChatId
         if (!currentChatId) return
@@ -147,7 +171,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
           streamingContent: fullContent,
         })
 
-        // Update the assistant message in real-time
         const chats = get().chats
         const chat = chats[currentChatId]
         if (!chat) return
@@ -155,12 +178,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const updated = structuredClone(chats)
         const updatedChat = updated[currentChatId]
 
-        // Find or create streaming assistant message
         let assistantMsg = updatedChat.messages.find(
           (m) => m.role === 'assistant' && m._id.startsWith('streaming-')
         )
 
         if (!assistantMsg) {
+          const chunkWithSources = chunk as typeof chunk & {
+            sources?: Message['sources']
+          }
           assistantMsg = {
             _id: `streaming-${messageId}`,
             chatId: currentChatId,
@@ -177,6 +202,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             currentVersionIndex: 0,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            sources: chunkWithSources.sources || [],
           }
           updatedChat.messages.push(assistantMsg)
         } else {
@@ -209,7 +235,51 @@ export const useChatStore = create<ChatState>((set, get) => ({
         })
       })
 
+      webSocketClient.onLLMComplete((event) => {
+        const currentChatId = get().currentChatId
+        if (!currentChatId) return
+
+        const assistantReply =
+          typeof event.assistantReply === 'string' ? event.assistantReply : null
+        const sources = Array.isArray(event.sources) ? event.sources : null
+
+        if (!assistantReply && !sources) return
+
+        const chats = get().chats
+        const chat = chats[currentChatId]
+        if (!chat) return
+
+        const updated = structuredClone(chats)
+        const updatedChat = updated[currentChatId]
+
+        const streamingId = `streaming-${event.messageId}`
+        const assistantMsg = updatedChat.messages.find(
+          (m) => m._id === streamingId
+        )
+        if (!assistantMsg) return
+
+        if (assistantReply) {
+          assistantMsg.versions[0].content = assistantReply
+          set({
+            streamingMessageId: event.messageId,
+            streamingContent: assistantReply,
+          })
+        }
+
+        if (sources) {
+          assistantMsg.sources = sources
+        }
+
+        set({ chats: updated })
+      })
+
       webSocketClient.onMessageCompleted((event) => {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log('🔵 MESSAGE COMPLETED - Full Response:', event)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log('📦 Event Data:', JSON.stringify(event.data, null, 2))
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
         try {
           if (
             event.data &&
@@ -329,7 +399,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const tempId = `temp-${Date.now()}`
     const prev = get().chats
     const chats = structuredClone(prev)
-    const mode = get().newsMode ? 'news' : 'default'
+    const mode = get().mode
 
     chats[tempId] = {
       chatId: tempId,
@@ -445,7 +515,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       localId = get().createTempChat()
     }
 
-    const requestedMode = get().newsMode ? 'news' : 'default'
+    const requestedMode = get().mode
 
     if (!get().isWebSocketConnected) {
       try {
@@ -549,6 +619,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isFirstMessage: boolean
     title?: string
   }) {
+    console.log('🟢 HANDLING MESSAGE COMPLETION')
+    console.log('Mode:', data.userMessage?.mode || 'default')
+    console.log('User Message:', data.userMessage)
+    console.log('Assistant Message:', data.assistantMessage)
+    console.log('Sources Count:', data.assistantMessage?.sources?.length || 0)
+    if (data.assistantMessage?.sources) {
+      console.log('Sources:', data.assistantMessage.sources)
+      data.assistantMessage.sources.forEach((source, idx) => {
+        console.log(`Source ${idx + 1}:`, {
+          hasTitle: 'title' in source,
+          hasUrl: 'url' in source,
+          hasDocId: 'doc_id' in source,
+          hasPdfUrl: 'pdf_url' in source,
+          keys: Object.keys(source),
+        })
+      })
+    }
+
     const { chatId, userMessage, assistantMessage, isFirstMessage, title } =
       data
 
@@ -635,18 +723,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const editedUserMessage = {
         ...data.editedUserMessage,
-        mode:
-          data.editedUserMessage.mode ||
-          chatEntry.mode ||
-          (get().newsMode ? 'news' : 'default'),
+        mode: data.editedUserMessage.mode || chatEntry.mode || get().mode,
       }
 
       const newAssistantMessage = {
         ...data.newAssistantMessage,
-        mode:
-          data.newAssistantMessage.mode ||
-          chatEntry.mode ||
-          (get().newsMode ? 'news' : 'default'),
+        mode: data.newAssistantMessage.mode || chatEntry.mode || get().mode,
       }
       if (data.sources && data.sources.length > 0) {
         newAssistantMessage.sources = data.sources

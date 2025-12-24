@@ -6,13 +6,15 @@ import { ShimmerLoaderText } from '../ShimmerTextLoader'
 import { Loader } from '../ui/loader'
 
 export function ChatProgressIndicator() {
-  const { assistantTypingMode } = useChatStore()
+  const { assistantTypingMode, streamingMessageId } = useChatStore()
   const latestProgress = useLatestProgressDetails()
 
-  const isNewsMode = assistantTypingMode === 'news'
+  const hasProgressDisplay =
+    assistantTypingMode === 'news' || assistantTypingMode === 'law'
+  const isStreaming = !!streamingMessageId
 
   const progressText = useMemo(() => {
-    if (!isNewsMode || !latestProgress) return null
+    if (!hasProgressDisplay || !latestProgress) return null
 
     const substage =
       typeof latestProgress.substage === 'object' &&
@@ -36,9 +38,13 @@ export function ChatProgressIndicator() {
     const fallback = stageLabel ? `Working on ${stageLabel}...` : null
 
     return substageMessage || directTitle || fallback
-  }, [isNewsMode, latestProgress])
+  }, [hasProgressDisplay, latestProgress])
 
-  if (isNewsMode) {
+  if (isStreaming) {
+    return null
+  }
+
+  if (hasProgressDisplay) {
     if (!progressText) {
       return <Loader variant='typing' size='md' />
     }
