@@ -52,7 +52,9 @@ axiosInstance.interceptors.response.use(
       !originalRequest._retry &&
       !shouldSkipRefresh
     ) {
+      console.info('[axios] 401 received, attempting token refresh')
       if (isRefreshing) {
+        console.info('[axios] Refresh in progress, queueing request')
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         })
@@ -68,6 +70,7 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
+        console.info('[axios] Refresh request start')
         await axiosInstance.post(
           apiEndpoints.auth.refresh,
           {},
@@ -76,6 +79,7 @@ axiosInstance.interceptors.response.use(
           }
         )
 
+        console.info('[axios] Refresh request success')
         processQueue()
         isRefreshing = false
 

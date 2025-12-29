@@ -69,7 +69,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className='grid flex-1 text-left text-sm leading-tight'>
                     <span className='truncate font-medium'>Trace</span>
-                    <span className='truncate text-xs'>Personal Workspace</span>
+                    <span className='truncate text-xs'>
+                      Document Intelligence Tool
+                    </span>
                   </div>
                 </a>
               </SidebarMenuButton>

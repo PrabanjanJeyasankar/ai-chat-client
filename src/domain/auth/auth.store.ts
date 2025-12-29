@@ -17,6 +17,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   setCurrentUser: (user: UserProfile | null) => {
+    console.info(
+      `[auth] setCurrentUser isAuthenticated=${Boolean(user)} userId=${user?.id}`
+    )
     set({
       currentUser: user,
       isAuthenticated: user !== null,
@@ -25,6 +28,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async (force = false) => {
+    console.info(`[auth] logout start force=${force}`)
     if (!force) {
       try {
         await authClient.logout()
@@ -38,16 +42,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: false,
       isLoading: false,
     })
+    console.info('[auth] logout complete')
   },
 
   syncUser: async () => {
     try {
+      console.info('[auth] syncUser start')
       const response = await authClient.getProfile()
       set({
         currentUser: response.data.user,
         isAuthenticated: true,
         isLoading: false,
       })
+      console.info(`[auth] syncUser success userId=${response.data.user.id}`)
     } catch (error) {
       console.error('Sync user error:', error)
       set({
@@ -55,6 +62,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         isLoading: false,
       })
+      console.info('[auth] syncUser reset user')
     }
   },
 }))

@@ -692,9 +692,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       storage.set('chats', updated)
       set({ chats: updated, currentChatId: chatId })
+
+      if (typeof window !== 'undefined') {
+        const nextPath = `/chat/${chatId}`
+        if (window.location.pathname !== nextPath) {
+          window.history.pushState(null, '', nextPath)
+        }
+      }
     } else {
       storage.set('chats', updated)
       set({ chats: updated })
+
+      if (typeof window !== 'undefined') {
+        const nextPath = `/chat/${chatId}`
+        if (window.location.pathname !== nextPath) {
+          window.history.pushState(null, '', nextPath)
+        }
+      }
     }
 
     setTimeout(() => {
