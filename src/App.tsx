@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import './App.css'
 import { ThemeProvider } from './components/ui/theme-provider'
+import { Analytics } from '@vercel/analytics/react'
 import { AppRoutes } from './routes/AppRoutes'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
   return (
     <ThemeProvider>
       <AppRoutes />
+      <Analytics />
       <Toaster richColors closeButton expand={false} position='top-right' />
     </ThemeProvider>
   )
