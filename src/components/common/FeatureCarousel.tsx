@@ -1,14 +1,23 @@
 import traceLogoNude from '@/assets/svg/trace_logo_nude.svg'
 import { AIInputSearch } from '@/components/common/AIInputSearch'
+import Silk from '@/components/Silk'
 import { motion } from 'framer-motion'
 
 export function FeatureCarousel() {
   return (
     <div className='relative h-full w-full origin-center overflow-hidden rounded-2xl'>
-      <div className='absolute inset-0 bg-linear-to-b from-orange-500/80 via-orange-400/50 to-orange-500/70' />
-      <div className='absolute inset-0 bg-linear-to-tr from-orange-500/30 via-transparent to-orange-500/60' />
+      <div className='pointer-events-none absolute inset-0'>
+        <Silk
+          speed={8}
+          scale={1}
+          color='#f54a00'
+          noiseIntensity={2.1}
+          rotation={0}
+        />
+      </div>
+      <div className='absolute inset-0 bg-linear-to-b from-orange-950/45 via-orange-900/30 to-orange-800/35' />
       <motion.div
-        className='absolute -top-6 right-0 h-2/3 w-2/3 bg-gradient-radial from-primary/64 via-primary/34 to-transparent dark:from-primary/56 dark:via-primary/30 dark:to-transparent blur-3xl'
+        className='absolute -top-6 right-0 h-2/3 w-2/3 bg-gradient-radial from-primary/64 via-primary/34 to-transparent blur-3xl'
         animate={{
           x: [0, 50, 0],
           y: [0, 30, 0],
@@ -21,7 +30,7 @@ export function FeatureCarousel() {
         }}
       />
       <motion.div
-        className='absolute -bottom-6 left-0 h-1/2 w-1/2 bg-gradient-radial from-primary/70 via-primary/36 to-transparent dark:from-primary/60 dark:via-primary/32 dark:to-transparent blur-2xl'
+        className='absolute -bottom-6 left-0 h-1/2 w-1/2 bg-gradient-radial from-primary/70 via-primary/36 to-transparent blur-2xl'
         animate={{
           x: [0, -30, 0],
           y: [0, -20, 0],
@@ -50,7 +59,7 @@ export function FeatureCarousel() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className='mt-4 scale-100 sm:scale-110 lg:scale-140 lg:ml-28'>
-            <h1 className='text-white dark:text-white/90 text-4xl font-semibold tracking-tight'>
+            <h1 className='text-white text-4xl font-semibold tracking-tight'>
               <span className='flex items-center gap-2'>
                 <img
                   src={traceLogoNude}
@@ -74,7 +83,7 @@ export function FeatureCarousel() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
             className='absolute right-0 top-1/2 w-full -translate-y-1/2 translate-x-0 sm:translate-x-[20%] lg:translate-x-[50%] xl:translate-x-[70%]'>
-            <AIInputSearch />
+            <AIInputSearch forceLight />
           </motion.div>
 
           {/* Footer Badge */}
@@ -83,7 +92,7 @@ export function FeatureCarousel() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
             className='mt-auto flex items-center justify-start'>
-            <div className='text-xs font-semibold uppercase tracking-wider text-white/70 dark:text-white/50'>
+            <div className='text-xs font-semibold uppercase tracking-wider text-white/70'>
               Two Modes • One Platform
             </div>
           </motion.div>

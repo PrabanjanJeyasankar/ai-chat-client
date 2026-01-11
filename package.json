@@ -20,7 +20,9 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@react-three/fiber": "^9.5.0",
     "@tailwindcss/vite": "^4.1.17",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -37,9 +39,9 @@
     "shiki": "^3.19.0",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
-    "@vercel/analytics": "^1.5.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
+    "three": "^0.167.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

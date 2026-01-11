@@ -3,7 +3,11 @@ import { cn } from '@/lib/utils'
 import { Newspaper, Paperclip, Send, Zap } from 'lucide-react'
 import { Fragment, useMemo } from 'react'
 
-export function AIInputSearch() {
+type AIInputSearchProps = {
+  forceLight?: boolean
+}
+
+export function AIInputSearch({ forceLight = false }: AIInputSearchProps) {
   const placeholder = 'Summarize key insights from these files.'
   const suggestions = useMemo(
     () => [
@@ -46,18 +50,20 @@ export function AIInputSearch() {
           tabIndex={0}
           className={cn(
             'relative flex w-full cursor-text flex-col overflow-hidden text-left transition-all duration-300',
-            'rounded-[30px] border border-white/35 bg-white/6 backdrop-blur-[26px] ring-1 ring-white/30',
-            'shadow-[0_18px_50px_rgba(15,23,42,0.22),inset_0_0.5px_0_rgba(255,255,255,0.45)]',
-            'before:pointer-events-none before:absolute before:inset-0 before:rounded-[30px] before:border before:border-white/30',
-            'before:bg-[radial-gradient(60%_80%_at_15%_0%,rgba(255,255,255,0.55),transparent_65%)]',
+            'rounded-[30px] border border-white/65 bg-white/30 backdrop-blur-[26px] ring-1 ring-white/65',
+            'shadow-[0_20px_60px_rgba(15,23,42,0.24),inset_0_0.5px_0_rgba(255,255,255,0.55)]',
+            'before:pointer-events-none before:absolute before:inset-0 before:rounded-[30px] before:border before:border-white/55',
+            'before:bg-[radial-gradient(60%_80%_at_15%_0%,rgba(255,255,255,0.85),transparent_65%)]',
             'after:pointer-events-none after:absolute after:inset-[1px] after:rounded-[28px]',
-            'after:bg-[linear-gradient(180deg,rgba(255,255,255,0.3),rgba(255,255,255,0.06)_35%,transparent_70%)]',
+            'after:bg-[linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.2)_35%,transparent_70%)]',
             'before:mask-[linear-gradient(120deg,transparent,rgba(255,255,255,0.9),transparent)]',
             'after:[mask-image:radial-gradient(70%_60%_at_20%_0%,rgba(255,255,255,0.9),transparent)]',
-            'dark:border-white/12 dark:bg-black/25 dark:ring-white/18',
-            'dark:before:border-white/18 dark:before:bg-[radial-gradient(60%_80%_at_15%_0%,rgba(255,255,255,0.28),transparent_65%)]',
-            'dark:after:bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04)_35%,transparent_70%)]',
-            'border-orange-200/20 ring-orange-200/10'
+            'dark:border-white/20 dark:bg-black/35 dark:ring-white/25',
+            'dark:before:border-white/25 dark:before:bg-[radial-gradient(60%_80%_at_15%_0%,rgba(255,255,255,0.36),transparent_65%)]',
+            'dark:after:bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.06)_35%,transparent_70%)]',
+            'border-orange-200/20 ring-orange-200/10',
+            forceLight &&
+              'dark:border-white/65 dark:bg-white/30 dark:ring-white/65 dark:before:border-white/55 dark:before:bg-[radial-gradient(60%_80%_at_15%_0%,rgba(255,255,255,0.85),transparent_65%)] dark:after:bg-[linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.2)_35%,transparent_70%)]'
           )}
           aria-hidden='true'>
           <div className='relative z-10 max-h-[200px] overflow-y-auto border-none rounded-2xl'>
@@ -67,7 +73,7 @@ export function AIInputSearch() {
               placeholder={placeholder}
               readOnly
               tabIndex={-1}
-              className='pointer-events-none w-full resize-none border-none bg-transparent px-5 py-4 text-lg leading-relaxed text-foreground/90 placeholder:text-black/40 focus-visible:ring-0'
+              className='pointer-events-none w-full resize-none border-none bg-transparent px-5 py-4 text-lg leading-relaxed text-white placeholder:text-white/80 focus-visible:ring-0'
             />
           </div>
           <div className='relative z-10 flex h-14 items-center justify-between px-4'>
@@ -121,13 +127,14 @@ export function AIInputSearch() {
               <Fragment key={item.label}>
                 <div
                   className={cn(
-                    'group/reflect relative inline-flex rounded-3xl border border-white/20 bg-white/4 px-4 py-3 text-black/65',
+                    'group/reflect relative inline-flex rounded-3xl border border-white/35 bg-white/22 px-4 py-3 text-white/80',
                     index < 2 && 'w-full sm:w-[calc(50%-0.25rem)]',
                     'backdrop-blur-xl transition',
-                    'shadow-[0_10px_30px_rgba(15,23,42,0.12),inset_0_0.5px_0_rgba(255,255,255,0.5)]',
-                    'dark:border-white/12 dark:bg-white/6',
+                    'shadow-[0_12px_36px_rgba(15,23,42,0.14),inset_0_0.5px_0_rgba(255,255,255,0.6)]',
+                    'dark:border-white/20 dark:bg-white/12',
                     'overflow-hidden',
-                    item.size
+                    item.size,
+                    forceLight && 'dark:border-white/35 dark:bg-white/14'
                   )}>
                   <span className='pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.45),transparent)] opacity-50' />
                   <div className='flex items-center gap-3'>
